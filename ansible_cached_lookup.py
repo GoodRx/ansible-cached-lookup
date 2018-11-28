@@ -27,7 +27,7 @@ from ansible.plugins.loader import lookup_loader
 from ansible.plugins.lookup import LookupBase
 from diskcache import Cache
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 
 DOCUMENTATION = """

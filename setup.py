@@ -54,8 +54,7 @@ setup(
     py_modules=["ansible_cached_lookup"],
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
-    # TODO: populate
-    description="Add is_live to your Pyramid requests",
+    description="An Ansible lookup plugin that caches the result of any other lookup",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     license="MIT",
