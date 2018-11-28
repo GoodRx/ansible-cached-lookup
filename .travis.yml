@@ -1,0 +1,37 @@
+---
+
+dist: xenial
+
+language: python
+python: 3.7
+
+matrix:
+  fast_finish: true
+  include:
+    - name: Python 2.7
+      python: 2.7
+      before_script: export TOXENV=$(tox -l | grep '^py27')
+    - name: Python 3.6
+      python: 3.6
+      before_script: export TOXENV=$(tox -l | grep '^py36')
+    - name: Python 3.7
+      python: 3.7
+      before_script: export TOXENV=$(tox -l | grep '^py37')
+    - name: Lint
+      env: TOXENV=lint
+
+cache:
+  directories:
+    - ~/.cache/pip
+before_cache:
+  - rm -rf ~/.cache/pip/log/
+
+install: pip install -U pip tox wheel setuptools virtualenv
+script: tox
+
+# In addition to pull requests, always build these branches
+branches:
+  only:
+    - master
+    # Match tags starting with "vN..."
+    - /^v\d+.*$/
