@@ -1,0 +1,50 @@
+version: "1.0"
+
+stages:
+  - prepare
+  - build
+  - test
+
+steps:
+  main_clone:
+    title: Clone Repo
+    stage: prepare
+    type: git-clone
+    git: "goodrx"
+    repo: "${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}"
+    revision:  "${{CF_REVISION}}"
+
+  build_images:
+    title: Build Images
+    stage: build
+    type: build
+    working_directory: /codefresh/volume
+    registry: goodrx
+    buildkit: true
+    disable_push: true
+    scale:
+      build_py27:
+        title: Build Python 2.7 Image
+        dockerfile: ansible-cached-lookup/.codefresh/py27.Dockerfile
+        image_name: py27
+      # build_py36:
+      #   title: Build Python 3.6 Image
+      #   dockerfile: ansible-cached-lookup/.codefresh/py36.Dockerfile
+      #   image_name: py36
+      # build_py37:
+      #   title: Build Python 3.7 Image
+      #   dockerfile: ansible-cached-lookup/.codefresh/py37.Dockerfile
+      #   image_name: py37
+
+  tests:
+    title: Tests
+    stage: test
+    working_directory: /src
+    scale:
+      test_py27:
+        title: Test with Python 2.7
+        image: ${{build_py27}}
+        environment:
+          - TOXENV=py27-ansible26,py27-ansible27,py27-ansiblelatest
+        commands:
+          - tox
