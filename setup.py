@@ -16,7 +16,7 @@ CLASSIFIERS = [
     "License :: OSI Approved :: MIT License",
 ]
 
-INSTALL_REQUIRES = ["ansible", "diskcache"]
+INSTALL_REQUIRES = ["ansible"]
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
