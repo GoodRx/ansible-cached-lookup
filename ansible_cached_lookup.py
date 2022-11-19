@@ -21,7 +21,7 @@ from ansible.errors import AnsibleError
 from ansible.plugins.loader import lookup_loader
 from ansible.plugins.lookup import LookupBase
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 
 DOCUMENTATION = """
@@ -43,36 +43,60 @@ EXAMPLES = """
 group_var1: "{{ lookup('cached', 'pipe', 'a-very-slow-command') }}"
 """
 
+cacheL1 = dict()
 
-cache = dict()
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
-
     display = Display()
+
+try:
+    from pymemcache.client import base
+    cacheL2 = base.Client(('127.0.0.1', 11211))
+    cacheL2.set("dummy", "dummy")
+except (ImportError, ConnectionError) as error:
+    display.verbose("memcached is not available for 'cached'")
+    cacheL2 = None
+
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
         lookup_name, terms = terms[0], terms[1:]
-        global cache
+        global cacheL1, cacheL2
         key = terms[0]
 
         try:
-            result = cache[key]
-            display.verbose("'cached' lookup cache hit for %r" % (key,))
+            result = cacheL1[key]
+            # don't log as that consumes extra I/O
+            #display.verbose("'cached' lookup cache hit L1 for %r" % (key,))
         except KeyError:
-            # Based on
-            # https://github.com/ansible/ansible/blob/v2.6.1/lib/ansible/vars/manager.py#L495
-            lookup = lookup_loader.get(
-                lookup_name, loader=self._loader, templar=self._templar
-            )
-            if lookup is None:
-                raise AnsibleError("lookup plugin (%s) not found" % lookup_name)
-
-            result = lookup.run(terms, variables=variables, **kwargs)
-            cache[key] = result
-            display.verbose("'cached' lookup cache miss for %r" % (key,))
+            try:
+                if cacheL2 is not None:
+                    result2 = cacheL2.get(key).decode("utf-8")
+                    if isinstance(result2, str):
+                        result = result2.split('!!!')
+                    else:
+                        result = result2
+                    cacheL1[key] = result
+                    # don't log as that consumes extra I/O
+                    #display.verbose("'cached' lookup cache hit L2 for %r" % (key,))
+                else:
+                    raise Error()
+            except:
+                # Based on
+                # https://github.com/ansible/ansible/blob/v2.6.1/lib/ansible/vars/manager.py#L495
+                lookup = lookup_loader.get(
+                    lookup_name, loader=self._loader, templar=self._templar
+                )
+                if lookup is None:
+                    raise AnsibleError("lookup plugin (%s) not found" % lookup_name)
+                result = lookup.run(terms, variables=variables, **kwargs)
+                cacheL1[key] = result
+                if cacheL2 is not None:
+                    cacheL2.set(key, result[0])
+                # don't log as that consumes extra I/O
+                #display.verbose("'cached' lookup cache miss for %r" % (key,))
 
         return result
