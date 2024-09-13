@@ -1,4 +1,4 @@
-:warning: **This project is no longer being maintained and has been archived** :warning:
+:warning: **This project is no longer being maintained and will be deprecated on 10/1/2024** :warning:
 
 # ansible-cached-lookup
 
