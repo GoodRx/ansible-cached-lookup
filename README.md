@@ -1,3 +1,5 @@
+:warning: **This project is no longer being maintained and will be deprecated on 10/1/2024** :warning:
+
 # ansible-cached-lookup
 
 An Ansible lookup plugin that caches the results of any other lookup, most
